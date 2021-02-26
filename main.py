@@ -3,28 +3,12 @@ import pytesseract
 import cv2
 from PIL import ImageGrab
 import config
-from twitchio.ext import commands
 import discord
 from discord.ext.commands import Bot
 from discord.ext import tasks
-
-
-class TwitchBot(commands.Bot):
-    def __init__(self):
-        super().__init__(
-            irc_token=config.OAUTH_TOKEN,
-            api_token=config.TWITCH_CLIENT_ID,
-            nick=config.TWITCH_USERNAME,
-            prefix='!',
-            initial_channels=[config.TWITCH_USERNAME]
-        )
-
-    # Events don't need decorators when subclassed
-    async def event_ready(self):
-        print('TWITCH:')
-        print('Logged in as')
-        print(self.nick)
-        print('------')
+import urllib.request
+import urllib.error
+import json
 
 
 class DiscordClient(discord.Client):
@@ -36,8 +20,6 @@ class DiscordClient(discord.Client):
         # clear all the messages in the soundboard channel
         print('------')
         self.image_to_string.start()
-        self.twitch = TwitchBot()
-        await self.twitch.start()
 
     @tasks.loop(seconds=5)
     async def image_to_string(self):
@@ -54,6 +36,7 @@ class DiscordClient(discord.Client):
 
     async def lookup_enemy(self, name):
         names = parse_name(name)
+        names = ['mizkif', 'elpadog']
 
 
 def parse_name(name):
@@ -74,5 +57,26 @@ def parse_name(name):
     return possible_names
 
 
+def get_users(users):
+    try:
+        url = f"https://api.twitch.tv/helix/users?"
+        heading = {
+            "Client-ID": config.TWITCH_CLIENT_ID,
+            "Authorization":("Bearer "+config.TOKEN)
+        }
+        for user in users:
+            url += "login="+user+"&"
+
+        req = urllib.request.Request(url, headers=heading)
+        response = urllib.request.urlopen(req)
+        output = json.loads(response.read())
+        print(output)
+        return output
+    except Exception as e:
+        print( 'gettwitchapi' , e )
+        return e
+
+
 discord_bot = DiscordClient()
 discord_bot.run(config.DISCORD_TOKEN)
+
