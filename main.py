@@ -37,6 +37,7 @@ class DiscordClient(discord.Client):
     async def lookup_enemy(self, name):
         names = parse_name(name)
         names = ['mizkif', 'elpadog']
+        get_users(names)
 
 
 def parse_name(name):
@@ -67,6 +68,23 @@ def get_users(users):
         for user in users:
             url += "login="+user+"&"
 
+        req = urllib.request.Request(url, headers=heading)
+        response = urllib.request.urlopen(req)
+        output = json.loads(response.read())
+        print(output)
+        return output
+    except Exception as e:
+        print( 'gettwitchapi' , e )
+        return e
+
+
+def create_clip(broadcast_id):
+    try:
+        url = f"https://api.twitch.tv/helix/clips?broadcaster_id="+broadcast_id
+        heading = {
+            "Client-ID": config.TWITCH_CLIENT_ID,
+            "Authorization":("Bearer "+config.TOKEN)
+        }
         req = urllib.request.Request(url, headers=heading)
         response = urllib.request.urlopen(req)
         output = json.loads(response.read())
