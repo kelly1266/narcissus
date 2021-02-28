@@ -21,23 +21,30 @@ class DiscordClient(discord.Client):
         print('------')
         self.image_to_string.start()
 
-    @tasks.loop(seconds=5)
+    @discord.ext.tasks.loop(seconds=2.5)
     async def image_to_string(self):
         pytesseract.pytesseract.tesseract_cmd = config.TESSERACT_PATH
         # TODO: FIND BBOX DIMENSIONS
-        cap = ImageGrab.grab(bbox=(400, 500, 1000, 900))
+        cap = ImageGrab.grab(bbox=(500, 800, 1300, 900))
 
         # Converted the image to monochrome for it to be easily
         # read by the OCR and obtained the output String.
         tesstr = pytesseract.image_to_string(
             cv2.cvtColor(nm.array(cap), cv2.COLOR_BGR2GRAY),
             lang='eng')
-        await self.lookup_enemy(tesstr)
+        if 'you' in tesstr.lower():
+            print(tesstr)
+            await self.lookup_enemy(tesstr)
 
     async def lookup_enemy(self, name):
         names = parse_name(name)
-        names = ['mizkif', 'elpadog']
-        get_users(names)
+        users = get_users(names)
+        try:
+            for user in users['data']:
+                clip = create_clip(user['id'])
+                await self.get_channel(config.DISCORD_CHANNEL).send(clip['data']['edit_url'])
+        except Exception as e:
+            print('Error: ' + e)
 
 
 def parse_name(name):
@@ -71,7 +78,6 @@ def get_users(users):
         req = urllib.request.Request(url, headers=heading)
         response = urllib.request.urlopen(req)
         output = json.loads(response.read())
-        print(output)
         return output
     except Exception as e:
         print( 'gettwitchapi' , e )
@@ -83,12 +89,11 @@ def create_clip(broadcast_id):
         url = f"https://api.twitch.tv/helix/clips?broadcaster_id="+broadcast_id
         heading = {
             "Client-ID": config.TWITCH_CLIENT_ID,
-            "Authorization":("Bearer "+config.TOKEN)
+            "Authorization":("Bearer "+config.OAUTH_TOKEN)
         }
-        req = urllib.request.Request(url, headers=heading)
+        req = urllib.request.Request(url, headers=heading, method='POST')
         response = urllib.request.urlopen(req)
         output = json.loads(response.read())
-        print(output)
         return output
     except Exception as e:
         print( 'gettwitchapi' , e )
