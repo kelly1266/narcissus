@@ -1,5 +1,6 @@
 import unittest
-from helper_functions import parse_name, parse_notif_from_tesseract
+from helper_functions import parse_name, parse_notif_from_tesseract, change_color
+from PIL import Image
 
 
 class TestParseName(unittest.TestCase):
@@ -51,6 +52,14 @@ class TestParseTesseract(unittest.TestCase):
         expected = 'you disrupted meelmajor'
         result = parse_notif_from_tesseract(input_str)
         self.assertEqual(result, expected)
+
+
+class TestColorConverter(unittest.TestCase):
+    def test_convert_text(self):
+        image_path = 'test photos\\exile.png'
+        im = Image.open(image_path)
+        change_color(im).show()
+        self.assertEqual(True, True)
 
 
 if __name__ == '__main__':

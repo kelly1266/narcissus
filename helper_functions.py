@@ -1,4 +1,5 @@
 import re
+from PIL import Image
 
 
 def parse_name(name):
@@ -41,4 +42,15 @@ def parse_notif_from_tesseract(tesseract_str):
 
 
 def change_color(image):
-    return
+    new_image_data = []
+    white_color = (183, 207, 232)
+    #white_color = (202, 229, 255)
+    black = (0, 0, 0)
+    for color in image.getdata():
+        if color == white_color:
+            new_image_data.append(white_color)
+        else:
+            new_image_data.append(black)
+    new_image = Image.new(image.mode, image.size)
+    new_image.putdata(new_image_data)
+    return new_image

@@ -45,11 +45,10 @@ class DiscordClient(discord.Client):
         tesstr = pytesseract.image_to_string(
             cv2.cvtColor(nm.array(cap), cv2.COLOR_BGR2GRAY),
             lang='eng')
-        #notif_str = parse_notif_from_tesseract(tesstr)
-        notif_str= tesstr
+        notif_str = parse_notif_from_tesseract(tesstr)
         if 'you' in notif_str.lower():
             print(notif_str)
-            cap.save(fp=('C:\\Users\\Ben\\Desktop\\misc ideas and notes\\pics'+str(self.i)+'.png'))
+            # cap.save(fp=('C:\\Users\\Ben\\Desktop\\misc ideas and notes\\pics'+str(self.i)+'.png'))
             await self.lookup_enemy(notif_str)
 
     async def lookup_enemy(self, name):
