@@ -9,6 +9,9 @@ from discord.ext import tasks
 import urllib.request
 import urllib.error
 import json
+import tkinter as tk
+import re
+from helper_functions import parse_name
 
 
 class DiscordClient(discord.Client):
@@ -24,14 +27,23 @@ class DiscordClient(discord.Client):
     @discord.ext.tasks.loop(seconds=2.5)
     async def image_to_string(self):
         pytesseract.pytesseract.tesseract_cmd = config.TESSERACT_PATH
-        # TODO: FIND BBOX DIMENSIONS
-        cap = ImageGrab.grab(bbox=(500, 800, 1300, 900))
+        root = tk.Tk()
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+        y_offset = 300
+        x1 = screen_width / 2 - 500
+        y1 = screen_height / 2 - 75 + y_offset
+        x2 = screen_width / 2 + 500
+        y2 = screen_height / 2 + 75 + y_offset
+        cap = ImageGrab.grab(bbox=(x1, y1, x2, y2))
 
         # Converted the image to monochrome for it to be easily
         # read by the OCR and obtained the output String.
         tesstr = pytesseract.image_to_string(
             cv2.cvtColor(nm.array(cap), cv2.COLOR_BGR2GRAY),
             lang='eng')
+        regex= re.compile('[^a-zA-Z0-9_ ]')
+        regex.sub('', tesstr)
         if 'you' in tesstr.lower():
             print(tesstr)
             await self.lookup_enemy(tesstr)
@@ -45,24 +57,6 @@ class DiscordClient(discord.Client):
                 await self.get_channel(config.DISCORD_CHANNEL).send(clip['data']['edit_url'])
         except Exception as e:
             print('Error: ' + e)
-
-
-def parse_name(name):
-    possible_names = []
-    possible_addons = ['tv', 'ttv', '_tv', '_ttv']
-    removables = ['you exiled ', 'you assisted in exiling ', 'you disrupted ', '\n', '\x0c']
-    # convert to lowercase for easier parsing
-    name = name.lower()
-    # remove
-    for removable in removables:
-        name = name.replace(removable, '')
-    # add the cleaned up name to the list of possible names
-    possible_names.append(name)
-    # remove any additional signifiers
-    for addon in possible_addons:
-        if addon in name:
-            possible_names.append(name.replace(addon, ''))
-    return possible_names
 
 
 def get_users(users):
@@ -102,4 +96,5 @@ def create_clip(broadcast_id):
 
 discord_bot = DiscordClient()
 discord_bot.run(config.DISCORD_TOKEN)
+
 
