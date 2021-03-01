@@ -11,7 +11,7 @@ import urllib.error
 import json
 import tkinter as tk
 import re
-from helper_functions import parse_name
+from helper_functions import parse_name, parse_notif_from_tesseract
 
 
 class DiscordClient(discord.Client):
@@ -26,15 +26,18 @@ class DiscordClient(discord.Client):
 
     @discord.ext.tasks.loop(seconds=2.5)
     async def image_to_string(self):
+
         pytesseract.pytesseract.tesseract_cmd = config.TESSERACT_PATH
+        # get the bounding box dimensions for image grab based off of screen dimensions
         root = tk.Tk()
         screen_width = root.winfo_screenwidth()
         screen_height = root.winfo_screenheight()
         y_offset = 300
         x1 = screen_width / 2 - 500
-        y1 = screen_height / 2 - 75 + y_offset
+        y1 = screen_height / 2 - 25 + y_offset
         x2 = screen_width / 2 + 500
-        y2 = screen_height / 2 + 75 + y_offset
+        y2 = screen_height / 2 + 25 + y_offset
+        # capture the section of the screen where notifications appear
         cap = ImageGrab.grab(bbox=(x1, y1, x2, y2))
 
         # Converted the image to monochrome for it to be easily
@@ -42,11 +45,12 @@ class DiscordClient(discord.Client):
         tesstr = pytesseract.image_to_string(
             cv2.cvtColor(nm.array(cap), cv2.COLOR_BGR2GRAY),
             lang='eng')
-        regex= re.compile('[^a-zA-Z0-9_ ]')
-        regex.sub('', tesstr)
-        if 'you' in tesstr.lower():
-            print(tesstr)
-            await self.lookup_enemy(tesstr)
+        #notif_str = parse_notif_from_tesseract(tesstr)
+        notif_str= tesstr
+        if 'you' in notif_str.lower():
+            print(notif_str)
+            cap.save(fp=('C:\\Users\\Ben\\Desktop\\misc ideas and notes\\pics'+str(self.i)+'.png'))
+            await self.lookup_enemy(notif_str)
 
     async def lookup_enemy(self, name):
         names = parse_name(name)
@@ -56,7 +60,7 @@ class DiscordClient(discord.Client):
                 clip = create_clip(user['id'])
                 await self.get_channel(config.DISCORD_CHANNEL).send(clip['data']['edit_url'])
         except Exception as e:
-            print('Error: ' + e)
+            print('Error: ', e)
 
 
 def get_users(users):
@@ -96,5 +100,4 @@ def create_clip(broadcast_id):
 
 discord_bot = DiscordClient()
 discord_bot.run(config.DISCORD_TOKEN)
-
 

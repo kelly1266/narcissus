@@ -1,5 +1,5 @@
 import unittest
-from helper_functions import parse_name
+from helper_functions import parse_name, parse_notif_from_tesseract
 
 
 class TestParseName(unittest.TestCase):
@@ -32,6 +32,26 @@ class TestParseName(unittest.TestCase):
         expected = ['playername']
         result = parse_name(input_str)
         self.assertEqual(result, expected)
+
+
+class TestParseTesseract(unittest.TestCase):
+    def test_exile_notif(self):
+        input_str = """YOU EXILED COACHLEMONS
+♀"""
+        expected = 'you exiled coachlemons'
+        result = parse_notif_from_tesseract(input_str)
+        self.assertEqual(result, expected)
+
+    def test_disrupted_notif(self):
+        input_str = """YOU DISRUPTED MEELMAJOR wil rg
+7 ra = » ..
+
+
+♀"""
+        expected = 'you disrupted meelmajor'
+        result = parse_notif_from_tesseract(input_str)
+        self.assertEqual(result, expected)
+
 
 if __name__ == '__main__':
     unittest.main()
